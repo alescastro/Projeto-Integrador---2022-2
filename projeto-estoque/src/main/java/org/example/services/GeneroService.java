@@ -2,15 +2,41 @@ package org.example.services;
 
 import org.example.domain.Genero;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class GeneroService {
     static void exibirGeneros(List<Genero> generos) {
-        System.out.println("Escolha o gênero:");
+        JFrame frame = new JFrame("Escolher Gênero");
+
+        // Crie um array com os nomes dos gêneros
+        String[] nomesGeneros = new String[generos.size()];
         for (int i = 0; i < generos.size(); i++) {
-            System.out.println((i + 1) + "- " + generos.get(i).getNome());
+            nomesGeneros[i] = generos.get(i).getNome();
+        }
+
+        // Crie um JComboBox com os nomes dos gêneros
+        JComboBox<String> comboBox = new JComboBox<>(nomesGeneros);
+
+        // Exiba um JOptionPane com o JComboBox
+        int result = JOptionPane.showOptionDialog(frame, comboBox, "Escolher Gênero",
+                JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, null, null);
+
+        if (result == JOptionPane.OK_OPTION) {
+            // Obtenha o índice da opção selecionada
+            int opcaoGenero = comboBox.getSelectedIndex();
+
+            if (opcaoGenero >= 0 && opcaoGenero < generos.size()) {
+                // Gênero selecionado
+                Genero generoSelecionado = generos.get(opcaoGenero);
+                JOptionPane.showMessageDialog(frame, "Gênero selecionado: " + generoSelecionado.getNome());
+            } else {
+                JOptionPane.showMessageDialog(frame, "Nenhum gênero selecionado.");
+            }
+        } else {
+            JOptionPane.showMessageDialog(frame, "Operação cancelada.");
         }
     }
 
