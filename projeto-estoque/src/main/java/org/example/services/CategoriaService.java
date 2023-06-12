@@ -4,70 +4,134 @@ import org.example.domain.Genero;
 import org.example.domain.PropriedadesCategoria;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
 import java.util.List;
 import java.util.Scanner;
 
-import static org.example.services.GeneroService.exibirGeneros;
-
 public class CategoriaService {
+    private static final Font FONT = new Font("Segoe UI", Font.PLAIN, 12);
+    private static final Color BACKGROUND_COLOR = new Color(240, 240, 240);
+
     public static void cadastrarCategoria(Scanner scanner, List<PropriedadesCategoria> propriedadesCategorias, List<Genero> generos) {
-        JFrame frame = new JFrame("Cadastrar Categoria");
+        setLookAndFeel();
 
-        // Solicitar o nome da categoria
-        String nomeCategoria = JOptionPane.showInputDialog(frame, "Digite o nome da categoria:");
+        // Painel principal
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        panel.setBackground(BACKGROUND_COLOR);
 
-        // Criar uma lista de opções para os gêneros
-        String[] opcoesGenero = new String[generos.size()];
-        for (int i = 0; i < generos.size(); i++) {
-            opcoesGenero[i] = generos.get(i).getNome();
-        }
+        // Título da janela
+        JLabel titleLabel = new JLabel("Cadastrar Categoria");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        panel.add(titleLabel, BorderLayout.NORTH);
 
-        // Solicitar a escolha do gênero da categoria
-        String opcaoGenero = (String) JOptionPane.showInputDialog(frame, "Escolha o gênero da categoria:", "Selecionar Gênero", JOptionPane.QUESTION_MESSAGE, null, opcoesGenero, opcoesGenero[0]);
+        // Painel de conteúdo
+        JPanel contentPanel = new JPanel(new GridLayout(3, 1, 0, 10));
+        contentPanel.setBackground(BACKGROUND_COLOR);
 
-        if (opcaoGenero == null) {
-            // O usuário cancelou a seleção do gênero
-            JOptionPane.showMessageDialog(frame,"Nenhum gênero selecionado. Categoria não cadastrada.");
-        } else {
-            // Encontrar o gênero selecionado na lista de gêneros
-            Genero generoSelecionado = null;
-            for (Genero genero : generos) {
-                if (genero.getNome().equals(opcaoGenero)) {
-                    generoSelecionado = genero;
-                    break;
+        // Campo de texto para o nome da categoria
+        JLabel nomeLabel = new JLabel("Nome da Categoria:");
+        nomeLabel.setFont(FONT);
+        JTextField nomeTextField = new JTextField();
+        nomeTextField.setFont(FONT);
+
+        // Label para a seleção do gênero
+        JLabel generoLabel = new JLabel("Escolha o gênero da categoria:");
+        generoLabel.setFont(FONT);
+
+        // Combo box para a seleção do gênero
+        JComboBox<Genero> generoComboBox = new JComboBox<>(generos.toArray(new Genero[0]));
+        generoComboBox.setFont(FONT);
+        generoComboBox.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof Genero) {
+                    Genero genero = (Genero) value;
+                    setText(genero.getNome());
                 }
+                return this;
             }
+        });
+
+        // Adiciona os componentes ao painel de conteúdo
+        contentPanel.add(nomeLabel);
+        contentPanel.add(nomeTextField);
+        contentPanel.add(generoLabel);
+        contentPanel.add(generoComboBox);
+
+        // Adiciona o painel de conteúdo ao painel principal
+        panel.add(contentPanel, BorderLayout.CENTER);
+
+        // Caixa de diálogo para a inserção do nome da categoria e seleção do gênero
+        int result = JOptionPane.showConfirmDialog(null, panel, "Cadastrar Categoria", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        if (result == JOptionPane.OK_OPTION) {
+            String nomeCategoria = nomeTextField.getText().trim();
+
+            if (nomeCategoria.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Nenhum nome de categoria fornecido. Categoria não cadastrada.", "Cadastro de Categoria", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            Genero generoSelecionado = (Genero) generoComboBox.getSelectedItem();
 
             if (generoSelecionado != null) {
                 PropriedadesCategoria novaPropriedadesCategoria = new PropriedadesCategoria(nomeCategoria, generoSelecionado);
                 propriedadesCategorias.add(novaPropriedadesCategoria);
-                JOptionPane.showMessageDialog(frame, "Categoria cadastrada com sucesso.", "Cadastro de Categoria", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(null, "Categoria cadastrada com sucesso.", "Cadastro de Categoria", JOptionPane.INFORMATION_MESSAGE);
             } else {
-                JOptionPane.showMessageDialog(frame, "Nome da categoria inválido. Categoria não cadastrada.");
+                JOptionPane.showMessageDialog(null, "Nenhum gênero selecionado. Categoria não cadastrada.", "Cadastro de Categoria", JOptionPane.WARNING_MESSAGE);
             }
         }
     }
 
-
     public static void exibirCategorias(List<PropriedadesCategoria> propriedadesCategorias) {
+        setLookAndFeel();
 
+        // Painel principal
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        panel.setBackground(BACKGROUND_COLOR);
 
-        JFrame frame = new JFrame("Categorias");
-        StringBuilder sb = new StringBuilder();
+        // Título da janela
+        JLabel titleLabel = new JLabel("Categoria(s)");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        panel.add(titleLabel, BorderLayout.NORTH);
 
-        sb.append("***      CATEGORIAS      ***\n");
+        // Painel de conteúdo
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        contentPanel.setBackground(BACKGROUND_COLOR);
 
         if (propriedadesCategorias.isEmpty()) {
-            sb.append("Nenhuma categoria cadastrada.\n");
+            JLabel emptyLabel = new JLabel("Nenhuma categoria cadastrada.");
+            emptyLabel.setFont(FONT);
+            contentPanel.add(emptyLabel);
         } else {
             for (int i = 0; i < propriedadesCategorias.size(); i++) {
                 PropriedadesCategoria propriedadesCategoria = propriedadesCategorias.get(i);
-                sb.append((i + 1) + "- CATEGORIA: " + propriedadesCategoria.getNome() + " | GÊNERO: " + propriedadesCategoria.getGenero().getNome() + "\n");
+                JLabel categoriaLabel = new JLabel((i + 1) + "- CATEGORIA: " + propriedadesCategoria.getNome() + " | GÊNERO: " + propriedadesCategoria.getGenero().getNome());
+                categoriaLabel.setFont(FONT);
+                contentPanel.add(categoriaLabel);
             }
         }
 
-        sb.append("***************************");
+        // Adiciona o painel de conteúdo ao painel principal
+        panel.add(contentPanel, BorderLayout.CENTER);
 
-        JOptionPane.showMessageDialog(frame, sb.toString(), "Categorias", JOptionPane.INFORMATION_MESSAGE);
+        // Caixa de diálogo para exibir as categorias
+        JOptionPane.showMessageDialog(null, panel, "Categorias", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private static void setLookAndFeel() {
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
