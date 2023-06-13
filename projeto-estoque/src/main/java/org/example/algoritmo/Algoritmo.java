@@ -4,6 +4,7 @@ import org.example.domain.Categoria;
 import org.example.domain.Produtos;
 import org.example.domain.PropriedadesCategoria;
 
+
 import java.util.*;
 
 import static org.example.services.AlgoritmoService.ehCorSegura;
@@ -18,9 +19,9 @@ public class Algoritmo {
     }
 
 
-    private boolean isColorValid(int[][] graph, PropriedadesCategoria[] coloracoes, int vertice, PropriedadesCategoria cor) {
+    private boolean isColorValid(boolean[][] graph, PropriedadesCategoria[] coloracoes, int vertice, PropriedadesCategoria cor) {
         for (int i = 0; i < graph.length; i++) {
-            if (graph[vertice][i] == 1 && coloracoes[i] == cor) {
+            if (graph[vertice][i] && coloracoes[i].equals(cor)) {
                 return false;
             }
         }
@@ -54,10 +55,8 @@ public class Algoritmo {
             return true;
         }
 
-        PropriedadesCategoria categoriaAtual = propriedadesCategorias.get(posicao);
-
         for (int cor = 0; cor < numCores; cor++) {
-            if (ehCorSegura(grafo, cores, posicao, cor) && corAtendeGenero(categoriaAtual, cores, cor, propriedadesCategorias)) {
+            if (ehCorSegura(grafo, cores, posicao, cor)) {
                 cores[posicao] = cor;
                 if (backtracking(grafo, cores, posicao + 1, numCores, propriedadesCategorias)) {
                     return true;
@@ -68,13 +67,5 @@ public class Algoritmo {
 
         return false;
     }
-
-    private static boolean corAtendeGenero(PropriedadesCategoria categoriaAtual, int[] cores, int cor, List<PropriedadesCategoria> propriedadesCategorias) {
-        for (int i = 0; i < cores.length; i++) {
-            if (cores[i] == cor && !categoriaAtual.getGenero().equals(propriedadesCategorias.get(i).getGenero())) {
-                return false;
-            }
-        }
-        return true;
-    }
 }
+

@@ -12,6 +12,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
+import java.util.HashSet;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -27,6 +29,7 @@ import javax.swing.JPanel;
 import javax.swing.JLabel;
 import javax.swing.JButton;
 import java.awt.Graphics;
+
 
 import static org.example.algoritmo.Algoritmo.backtracking;
 import static org.example.services.CategoriaService.cadastrarCategoria;
@@ -235,7 +238,7 @@ public class Main {
         // Adicione os ActionListeners para cada botão
         cadastrarCategoriaButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                cadastrarCategoria(scanner, propriedadesCategorias, generos);
+                cadastrarCategoria(scanner, propriedadesCategorias);
             }
         });
 
@@ -259,7 +262,7 @@ public class Main {
 
         organizarEstoqueButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                organizarEstoque(propriedadesCategorias, generos, produtos);
+                organizarEstoque(propriedadesCategorias, produtos);
             }
         });
 
@@ -303,66 +306,127 @@ public class Main {
     }
 
 
-    private static void organizarEstoque(List<PropriedadesCategoria> propriedadesCategorias, List<Genero> generos, List<Produto> produtos) {
-        int numCategorias = propriedadesCategorias.size();
-        boolean[][] grafo = new boolean[numCategorias][numCategorias];
-
-        // Cria uma matriz de adjacência com base nas restrições de gênero
-        for (int i = 0; i < numCategorias; i++) {
-            PropriedadesCategoria propriedadesCategoriaI = propriedadesCategorias.get(i);
-            for (int j = i + 1; j < numCategorias; j++) {
-                PropriedadesCategoria propriedadesCategoriaJ = propriedadesCategorias.get(j);
-                if (propriedadesCategoriaI.getGenero().equals(propriedadesCategoriaJ.getGenero())) {
-                    grafo[i][j] = true;
-                    grafo[j][i] = true;
-                }
+    private static int getCategoriaIndex(String categoriaNome, List<PropriedadesCategoria> propriedadesCategorias) {
+        for (int i = 0; i < propriedadesCategorias.size(); i++) {
+            if (propriedadesCategorias.get(i).getNome().equalsIgnoreCase(categoriaNome)) {
+                return i;
             }
         }
+        return -1;
+    }
+
+    private static void organizarEstoque(List<PropriedadesCategoria> propriedadesCategorias, List<Produto> produtos) {
+        int numCategorias = propriedadesCategorias.size();
+        boolean[][] grafo = new boolean[numCategorias][numCategorias];
 
         int[] cores = new int[numCategorias];
         Arrays.fill(cores, -1);
 
         StringBuilder mensagem = new StringBuilder();
 
-        if (backtracking(grafo, cores, 0, generos.size(), propriedadesCategorias)) {
-            mensagem.append("<html><h2>Estoque organizado com sucesso.</h2><br><br>");
-
-            // Cria um mapa para armazenar os produtos por gênero
-            Map<Genero, List<Produto>> produtosPorGenero = new HashMap<>();
-            for (Genero genero : generos) {
-                produtosPorGenero.put(genero, new ArrayList<>());
-            }
-
-            // Classifica os produtos por gênero
-            for (Produto produto : produtos) {
-                Genero generoProduto = produto.getCategoria().getGenero();
-                List<Produto> produtosDoGenero = produtosPorGenero.get(generoProduto);
-                produtosDoGenero.add(produto);
-            }
-
-            // Adiciona as informações dos armazéns por gênero que não estão vazios
-            for (Map.Entry<Genero, List<Produto>> entry : produtosPorGenero.entrySet()) {
-                Genero genero = entry.getKey();
-                List<Produto> produtosDoGenero = entry.getValue();
-
-                if (!produtosDoGenero.isEmpty()) {
-                    mensagem.append("<b>Armazém:</b><br>");
-                    mensagem.append("- Gênero: ").append(genero.getNome()).append("<br>");
-                    mensagem.append("  Produtos:<br>");
-                    for (Produto produto : produtosDoGenero) {
-                        mensagem.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Categoria: ").append(produto.getCategoria().getNome()).append("<br>");
-                        mensagem.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;").append("Produto: ").append(produto.getNome()).append("<br>");
+        // Solicita as restrições de categoria
+        String restricaoInput = JOptionPane.showInputDialog(null, "Digite as categorias que podem ficar juntas (separadas por vírgula):", "Restrição de Categorias", JOptionPane.PLAIN_MESSAGE);
+        if (restricaoInput != null && !restricaoInput.isEmpty()) {
+            String[] gruposRestricoes = restricaoInput.split("-");
+            Set<Integer> categoriasInformadas = new HashSet<>();
+            for (String grupo : gruposRestricoes) {
+                String[] categoriasPermitidas = grupo.trim().split(",");
+                if (categoriasPermitidas.length > 1) {
+                    for (int i = 0; i < categoriasPermitidas.length - 1; i++) {
+                        for (int j = i + 1; j < categoriasPermitidas.length; j++) {
+                            int indexCategoria1 = getCategoriaIndex(categoriasPermitidas[i].trim(), propriedadesCategorias);
+                            int indexCategoria2 = getCategoriaIndex(categoriasPermitidas[j].trim(), propriedadesCategorias);
+                            if (indexCategoria1 != -1 && indexCategoria2 != -1) {
+                                grafo[indexCategoria1][indexCategoria2] = true;
+                                grafo[indexCategoria2][indexCategoria1] = true;
+                                categoriasInformadas.add(indexCategoria1);
+                                categoriasInformadas.add(indexCategoria2);
+                            }
+                        }
                     }
-                    mensagem.append("<br>");
                 }
             }
 
-            JOptionPane.showMessageDialog(null, mensagem.toString(), "Organização de Estoque", JOptionPane.INFORMATION_MESSAGE);
+            // Encontra os componentes conexos no grafo
+            List<Set<Integer>> componentesConexos = encontrarComponentesConexos(grafo);
+
+            if (componentesConexos.size() > 0) {
+                mensagem.append("<html><h2>Estoque organizado com sucesso.</h2><br><br>");
+
+                // Cria um mapa para armazenar os produtos por categoria
+                Map<Integer, List<Produto>> produtosPorCategoria = new HashMap<>();
+                for (int i = 0; i < numCategorias; i++) {
+                    produtosPorCategoria.put(i, new ArrayList<>());
+                }
+
+                // Classifica os produtos por categoria
+                for (Produto produto : produtos) {
+                    int indexCategoria = getCategoriaIndex(produto.getCategoria().getNome(), propriedadesCategorias);
+                    List<Produto> produtosDaCategoria = produtosPorCategoria.get(indexCategoria);
+                    produtosDaCategoria.add(produto);
+                }
+
+                // Exibe os armazéns
+                int armazemIndex = 1;
+                for (Set<Integer> componenteConexo : componentesConexos) {
+                    mensagem.append("<b>Armazém ").append(armazemIndex).append(":</b><br>");
+                    mensagem.append("  Categorias:");
+                    for (int indexCategoria : componenteConexo) {
+                        mensagem.append(" ").append(propriedadesCategorias.get(indexCategoria).getNome());
+                    }
+                    mensagem.append("<br>");
+                    mensagem.append("  Produtos:<br>");
+                    for (int indexCategoria : componenteConexo) {
+                        PropriedadesCategoria categoria = propriedadesCategorias.get(indexCategoria);
+                        List<Produto> produtosDaCategoria = produtosPorCategoria.get(indexCategoria);
+                        mensagem.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Categoria: ").append(categoria.getNome()).append("<br>");
+                        for (Produto produto : produtosDaCategoria) {
+                            mensagem.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Produto: ").append(produto.getNome()).append("<br>");
+                        }
+                    }
+                    armazemIndex++;
+                }
+
+                JOptionPane.showMessageDialog(null, mensagem.toString(), "Organização de Estoque", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                mensagem.append("Não é possível organizar o estoque com as categorias informadas.");
+                JOptionPane.showMessageDialog(null, mensagem.toString(), "Organização de Estoque", JOptionPane.INFORMATION_MESSAGE);
+            }
         } else {
-            mensagem.append("Não é possível organizar o estoque de acordo com as restrições de gênero.");
+            mensagem.append("Não é possível organizar o estoque sem restrições de categoria.");
             JOptionPane.showMessageDialog(null, mensagem.toString(), "Organização de Estoque", JOptionPane.INFORMATION_MESSAGE);
         }
     }
+
+    private static List<Set<Integer>> encontrarComponentesConexos(boolean[][] grafo) {
+        int numVertices = grafo.length;
+        int[] cores = new int[numVertices];
+        Arrays.fill(cores, -1);
+
+        List<Set<Integer>> componentesConexos = new ArrayList<>();
+
+        for (int i = 0; i < numVertices; i++) {
+            if (cores[i] == -1) {
+                Set<Integer> componente = new HashSet<>();
+                backtracking(grafo, i, cores, componente);
+                componentesConexos.add(componente);
+            }
+        }
+
+        return componentesConexos;
+    }
+
+    private static void backtracking(boolean[][] grafo, int vertice, int[] cores, Set<Integer> componente) {
+        cores[vertice] = 1;
+        componente.add(vertice);
+
+        for (int i = 0; i < grafo.length; i++) {
+            if (grafo[vertice][i] && cores[i] == -1) {
+                backtracking(grafo, i, cores, componente);
+            }
+        }
+    }
+
 
     private static void exibirProdutosNumerados(List<Produto> produtos) {
         JFrame frame = new JFrame("Lista de Produtos");
@@ -397,8 +461,7 @@ public class Main {
             mensagem.append("Categorias:\n");
             for (int i = 0; i < propriedadesCategorias.size(); i++) {
                 PropriedadesCategoria propriedadesCategoria = propriedadesCategorias.get(i);
-                mensagem.append((i + 1)).append("- CATEGORIA: ").append(propriedadesCategoria.getNome())
-                        .append(" | GÊNERO: ").append(propriedadesCategoria.getGenero().getNome()).append("\n");
+                mensagem.append((i + 1)).append("- CATEGORIA: ").append(propriedadesCategoria.getNome()).append("\n");
             }
 
             boolean numeroValido = false;

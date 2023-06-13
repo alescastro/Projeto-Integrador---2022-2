@@ -1,6 +1,5 @@
 package org.example.services;
 
-import org.example.domain.Genero;
 import org.example.domain.PropriedadesCategoria;
 
 import javax.swing.*;
@@ -13,7 +12,7 @@ public class CategoriaService {
     private static final Font FONT = new Font("Segoe UI", Font.PLAIN, 12);
     private static final Color BACKGROUND_COLOR = new Color(240, 240, 240);
 
-    public static void cadastrarCategoria(Scanner scanner, List<PropriedadesCategoria> propriedadesCategorias, List<Genero> generos) {
+    public static void cadastrarCategoria(Scanner scanner, List<PropriedadesCategoria> propriedadesCategorias) {
         setLookAndFeel();
 
         // Painel principal
@@ -28,7 +27,7 @@ public class CategoriaService {
         panel.add(titleLabel, BorderLayout.NORTH);
 
         // Painel de conteúdo
-        JPanel contentPanel = new JPanel(new GridLayout(3, 1, 0, 10));
+        JPanel contentPanel = new JPanel(new GridLayout(2, 1, 0, 10));
         contentPanel.setBackground(BACKGROUND_COLOR);
 
         // Campo de texto para o nome da categoria
@@ -37,35 +36,14 @@ public class CategoriaService {
         JTextField nomeTextField = new JTextField();
         nomeTextField.setFont(FONT);
 
-        // Label para a seleção do gênero
-        JLabel generoLabel = new JLabel("Escolha o gênero da categoria:");
-        generoLabel.setFont(FONT);
-
-        // Combo box para a seleção do gênero
-        JComboBox<Genero> generoComboBox = new JComboBox<>(generos.toArray(new Genero[0]));
-        generoComboBox.setFont(FONT);
-        generoComboBox.setRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (value instanceof Genero) {
-                    Genero genero = (Genero) value;
-                    setText(genero.getNome());
-                }
-                return this;
-            }
-        });
-
         // Adiciona os componentes ao painel de conteúdo
         contentPanel.add(nomeLabel);
         contentPanel.add(nomeTextField);
-        contentPanel.add(generoLabel);
-        contentPanel.add(generoComboBox);
 
         // Adiciona o painel de conteúdo ao painel principal
         panel.add(contentPanel, BorderLayout.CENTER);
 
-        // Caixa de diálogo para a inserção do nome da categoria e seleção do gênero
+        // Caixa de diálogo para a inserção do nome da categoria
         int result = JOptionPane.showConfirmDialog(null, panel, "Cadastrar Categoria", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
         if (result == JOptionPane.OK_OPTION) {
@@ -76,15 +54,9 @@ public class CategoriaService {
                 return;
             }
 
-            Genero generoSelecionado = (Genero) generoComboBox.getSelectedItem();
-
-            if (generoSelecionado != null) {
-                PropriedadesCategoria novaPropriedadesCategoria = new PropriedadesCategoria(nomeCategoria, generoSelecionado);
-                propriedadesCategorias.add(novaPropriedadesCategoria);
-                JOptionPane.showMessageDialog(null, "Categoria cadastrada com sucesso.", "Cadastro de Categoria", JOptionPane.INFORMATION_MESSAGE);
-            } else {
-                JOptionPane.showMessageDialog(null, "Nenhum gênero selecionado. Categoria não cadastrada.", "Cadastro de Categoria", JOptionPane.WARNING_MESSAGE);
-            }
+            PropriedadesCategoria novaPropriedadesCategoria = new PropriedadesCategoria(nomeCategoria);
+            propriedadesCategorias.add(novaPropriedadesCategoria);
+            JOptionPane.showMessageDialog(null, "Categoria cadastrada com sucesso.", "Cadastro de Categoria", JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
@@ -114,7 +86,7 @@ public class CategoriaService {
         } else {
             for (int i = 0; i < propriedadesCategorias.size(); i++) {
                 PropriedadesCategoria propriedadesCategoria = propriedadesCategorias.get(i);
-                JLabel categoriaLabel = new JLabel((i + 1) + "- CATEGORIA: " + propriedadesCategoria.getNome() + " | GÊNERO: " + propriedadesCategoria.getGenero().getNome());
+                JLabel categoriaLabel = new JLabel((i + 1) + "- CATEGORIA: " + propriedadesCategoria.getNome());
                 categoriaLabel.setFont(FONT);
                 contentPanel.add(categoriaLabel);
             }

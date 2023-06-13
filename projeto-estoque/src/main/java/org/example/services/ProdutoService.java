@@ -65,7 +65,7 @@ public class ProdutoService {
                     super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                     if (value instanceof PropriedadesCategoria) {
                         PropriedadesCategoria categoria = (PropriedadesCategoria) value;
-                        setText(categoria.getNome() + " (Gênero: " + categoria.getGenero().getNome() + ")");
+                        setText(categoria.getNome());
                     }
                     return this;
                 }
